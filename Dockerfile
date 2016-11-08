@@ -1,15 +1,24 @@
 FROM ubuntu:14.04
 MAINTAINER Kyle Manna <kyle@kylemanna.com>
 
+ARG USER_ID
+ARG GROUP_ID
+
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 8842ce5e && \
     echo "deb http://ppa.launchpad.net/bitcoin/bitcoin/ubuntu trusty main" > /etc/apt/sources.list.d/bitcoin.list
 
 RUN apt-get update && \
-    apt-get install -y bitcoind aria2 && \
+    apt-get install -y bitcoind && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ENV HOME /bitcoin
-RUN useradd -s /bin/bash -m -d /bitcoin bitcoin
+
+# add user with specified (or default) user/group ids
+ENV USER_ID ${USER_ID:-1000}
+ENV GROUP_ID ${GROUP_ID:-1000}
+RUN groupadd -g ${GROUP_ID} bitcoin
+RUN useradd -u ${USER_ID} -g bitcoin -s /bin/bash -m -d /bitcoin bitcoin
+
 RUN chown bitcoin:bitcoin -R /bitcoin
 
 ADD ./bin /usr/local/bin
@@ -23,7 +32,7 @@ USER bitcoin
 
 VOLUME ["/bitcoin"]
 
-EXPOSE 8332 8333 6881 6882
+EXPOSE 8332 8333 18332 18333
 
 WORKDIR /bitcoin
 
